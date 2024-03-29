@@ -23,15 +23,17 @@ jobs:
           go-version: 1.22
 
       - name: Install Dependencies
+        working-directory: ./api-gateway  
         run: |
           go mod download
           go get -u golang.org/x/lint/golint
 
       - name: Run API Tests
-        run: go test -v -coverprofile=coverage.out /api-gateway/api_test/tests
+        working-directory: ./api-gateway/api_test/tests  
+        run: go test -v -coverprofile=coverage.out
 
       - name: Upload Code Coverage
         uses: actions/upload-artifact@v2
         with:
           name: coverage
-          path: ./coverage.out
+          path: ./api-gateway/coverage.out  
