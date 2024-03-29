@@ -1,0 +1,274 @@
+# # version: '3.8'
+# # services:
+# #   user-service:
+# #     build: ./user_service
+# #     ports:
+# #       - "5000:5000"
+# #     depends_on:
+# #       - db
+# #     # network_mode: "host"
+# #     restart: always
+# #     networks:
+# #       - dba
+
+
+# #   db:
+# #     container_name: postgres
+# #     image: postgres
+# #     restart: unless-stopped
+# #     environment:
+# #       POSTGRES_DB: users
+# #       POSTGRES_USER: postgres
+# #       PGDATA: /data/postgres
+# #       POSTGRES_PASSWORD: 123
+# #     ports:
+# #       - "5332:5332"
+# #     healthcheck:
+# #       test: [ "CMD-SHELL", "pg_isready -d postgres" ]
+# #       interval: 30s
+# #       timeout: 10s
+# #       retries: 5
+# #     networks:
+# #       - dba
+# # networks:
+# #   db:
+# #     driver: bridge
+
+# # # volumes:
+# # #   db:
+
+
+# #   # product-service:
+# #   #   container_name: product_service
+# #   #   depends_on:
+# #   #     - dbpost
+# #   #     # - db2
+# #   #   build: ./product_service
+# #   #   ports:
+# #   #     - "6000:6000"
+# #   #   # network_mode: "host"
+
+# #   # api-gateway:
+# #   #   build: ./api-gateway
+# #   #   ports:
+# #   #     - "8080:8080"
+# #   #   # network_mode: "host"
+# #   #   restart: always
+    
+
+# #   # db2:
+# #   #   image: postgres
+# #   #   restart: always
+# #   #   ports:
+# #   #     - "5433:5430"
+# #   #   environment:
+# #   #     - POSTGRES_DB=products
+# #   #     - POSTGRES_USER=postgres
+# #   #     - POSTGRES_PASSWORD=nodirbek
+
+
+
+
+
+# #   # clinic:
+# #   #   build: .
+# #   #   ports:
+# #   #     - "8081:8081"
+# #   #   environment:
+# #   #      POSTGRES_HOST: postgres
+# #   #      POSTGRES_PORT: 5432
+# #   #      POSTGRES_USER: otajonov
+# #   #      POSTGRES_PASSWORD: quvonchbek
+# #   #      POSTGRES_DB: clinic
+# #   #      HTTP_PORT: 8081
+# #   #      SIGN_KEY: clinic
+# #   #      LOG_LEVEL: debug
+# #   #      ENVIRONMENT: developer
+# #   #   volumes:
+# #   #     - media:/app/media
+# #   #   networks:
+# #   #     - clinic_network
+# #   #   depends_on:
+# #   #     - postgres
+# #   #   restart: always
+
+# # networks:
+# #   clinic_network:  # Create a custom Docker network
+# #     driver: bridge  # You can change the driver as needed
+
+# # volumes:
+# #   postgres-data:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# services:
+#   db:
+#     container_name: db
+#     image: postgres
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: 123
+#       PGDATA: /data/postgres
+#       POSTGRES_DB: userdb
+#     volumes:
+#       - db:/dbdata/postgres
+#     ports:
+#       - "5332:5332"
+#     networks:
+#       - db
+#     restart: unless-stopped
+#     healthcheck:
+#       test: [ "CMD-SHELL", "pg_isready -d postgres" ]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 5
+
+# user_service:
+#     container_name: user_service
+#     build: ./user_service
+#     depends_on: 
+#       - "db"
+#     ports:
+#       - "5000:5000"
+#     networks:
+#       - db
+#     command: sh -c "migrate -path migrations -database \"$DB_URL\" -verbose up"
+
+
+#   # product_service:
+#   #   container_name: product_service
+#   #   build: ./product_service
+#   #   depends_on: 
+#   #     - "db"
+#   #   ports:
+#   #     - "6000:6000"
+#   #   networks:
+#   #     - db
+
+#   # api-gateway:
+#   #   build: ./api-gateway
+#   #   depends_on:
+#   #     - product_service
+#   #     - user_service
+#   #     - db
+#   #   ports:
+#   #     - "8080:8080"
+#   #   restart: unless-stopped
+#   #   networks:
+#   #     - db
+    
+
+# networks:
+#   db:
+#     driver: bridge
+
+# volumes:
+#   db:
+
+
+
+
+
+
+
+version: '3.8'
+services:
+  userdb:
+    container_name: mongodb
+    image: mongo
+    ports:
+      - "27018:27018"
+    networks:
+      - db
+    restart: unless-stopped
+
+
+  user_service:
+    container_name: user_service
+    build: ./user_service
+    depends_on: 
+      - "userdb"
+    ports:
+      - "5000:5000"
+    networks:
+      - db
+
+  product_service:
+    container_name: product_service
+    build: ./product_service
+    depends_on: 
+      - "userdb"
+    ports:
+      - "6000:6000"
+    networks:
+      - db
+
+  api-gateway:
+    build: ./api-gateway
+    depends_on:
+      - product_service
+      - user_service
+      - userdb
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - db
+
+
+  # migrate:
+  #   image: migrate/migrate
+  #   networks:
+  #     - db
+  #   volumes:
+  #     - ./migrations:/migrations
+  #   command: [ "-path", "/migrations", "-database",  "postgres://postgres:123@db:5432/userdb?sslmode=disable", "up","1"]
+  #   links:
+  #     - userdb
+  #   depends_on:
+  #     - "userdb"
+
+  redis:
+    container_name: redis
+    image: redis
+    ports:
+      - "6279:6279"
+    networks:
+      - db
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db:
+
+
